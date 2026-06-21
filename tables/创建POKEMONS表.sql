@@ -8,6 +8,10 @@ create table POKEMONS
 	HELD_ITEM_ID int null,
 	TRAINER_ID int not null,
 	POKEMON_LEVEL int not null,
+	MOVE_1 int not null,
+	MOVE_2 int not null,
+	MOVE_3 int not null,
+	MOVE_4 int not null
 
 	constraint PK_POKEMONS primary key (POKEMON_ID),
 	constraint CHECK_POKEMON_LEVEL check (POKEMON_LEVEL>0 and POKEMON_LEVEL<=100),
@@ -17,5 +21,26 @@ create table POKEMONS
 	constraint FK_POKEMONS_ITEM
 		foreign key (HELD_ITEM_ID) references ITEMS(ITEM_ID),
 	constraint FK_POKEMONS_TRAINER
-		foreign key (TRAINER_ID) references TRAINERS(TRAINER_ID)
+		foreign key (TRAINER_ID) references TRAINERS(TRAINER_ID),
+	constraint FK_POKEMONS_MOVE_1
+    foreign key (MOVE_1) references MOVES(MOVE_ID),
+
+	constraint FK_POKEMONS_MOVE_2
+    foreign key (MOVE_2) references MOVES(MOVE_ID),
+
+	constraint FK_POKEMONS_MOVE_3
+    foreign key (MOVE_3) references MOVES(MOVE_ID),
+
+	constraint FK_POKEMONS_MOVE_4
+    foreign key (MOVE_4) references MOVES(MOVE_ID),
+
+	constraint CK_POKEMONS_MOVES_DIFFERENT
+	check (
+		MOVE_1 <> MOVE_2 and
+		MOVE_1 <> MOVE_3 and
+		MOVE_1 <> MOVE_4 and
+		MOVE_2 <> MOVE_3 and
+		MOVE_2 <> MOVE_4 and
+		MOVE_3 <> MOVE_4
+)
 )
