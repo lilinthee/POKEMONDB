@@ -2,7 +2,7 @@ use POKEMON
 go
 create table POKEMON_SPECIES
 (
-	POKEMON_ID int identity(1,1) not null,
+	POKEMON_SPECIES_ID int identity(1,1) not null,
 	POKEMON_NAME nvarchar(30) not null,
 	POKEMON_TYPE1 nvarchar(10) not null,
 	POKEMON_TYPE2 nvarchar(10) null,
