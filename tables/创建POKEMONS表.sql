@@ -24,16 +24,16 @@ create table POKEMONS
 	constraint FK_POKEMONS_TRAINER
 		foreign key (TRAINER_ID) references TRAINERS(TRAINER_ID),
 	constraint FK_POKEMONS_MOVE_1
-		foreign key (MOVE_1) references MOVES(MOVE_ID),
+		foreign key (POKEMON_SPECIES_ID,MOVE_1) references POKEMON_MOVE(POKEMON_SPECIES_ID,MOVE_ID),
 
 	constraint FK_POKEMONS_MOVE_2
-		foreign key (MOVE_2) references MOVES(MOVE_ID),
+		foreign key (POKEMON_SPECIES_ID,MOVE_2) references POKEMON_MOVE(POKEMON_SPECIES_ID,MOVE_ID),
 
 	constraint FK_POKEMONS_MOVE_3
-		foreign key (MOVE_3) references MOVES(MOVE_ID),
+		foreign key (POKEMON_SPECIES_ID,MOVE_3) references POKEMON_MOVE(POKEMON_SPECIES_ID,MOVE_ID),
 
 	constraint FK_POKEMONS_MOVE_4
-		foreign key (MOVE_4) references MOVES(MOVE_ID),
+		foreign key (POKEMON_SPECIES_ID,MOVE_4) references POKEMON_MOVE(POKEMON_SPECIES_ID,MOVE_ID),
 
 	constraint FK_POKEMONS_SPECIES_ABILITY
 		foreign key (POKEMON_SPECIES_ID, ABILITY_ID) references POKEMON_ABILITY(POKEMON_SPECIES_ID, ABILITY_ID),
