@@ -8,10 +8,10 @@ create table POKEMONS
 	HELD_ITEM_ID int null,
 	TRAINER_ID int not null,
 	POKEMON_LEVEL int not null,
-	MOVE_1 int not null,
-	MOVE_2 int not null,
-	MOVE_3 int not null,
-	MOVE_4 int not null
+	MOVE_1 int null,
+	MOVE_2 int null,
+	MOVE_3 int null,
+	MOVE_4 int null
 
 	constraint PK_POKEMONS primary key (POKEMON_ID),
 	constraint CHECK_POKEMON_LEVEL check (POKEMON_LEVEL>0 and POKEMON_LEVEL<=100),
