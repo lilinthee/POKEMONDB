@@ -13,7 +13,7 @@ create table POKEMON_SPECIES
 	SPD int not null,
 	SPE int not null,
 
-	constraint PK_POKEMON_SPECIES primary key (POKEMON_ID),
+	constraint PK_POKEMON_SPECIES primary key (POKEMON_SPECIES_ID),
 	constraint UNIQUE_POKEMON_NAME unique (POKEMON_NAME),
 	constraint CHECK_POKEMON_TYPE1 check (POKEMON_TYPE1 in 
 												('normal','fire','water'
