@@ -1,0 +1,624 @@
+use POKEMON
+go
+
+/*
+    宝可梦数据库初始化数据
+
+    主要参考：
+    - 神奇宝贝百科：宝可梦列表（按全国图鉴编号）/简单版
+    - 神奇宝贝百科：招式列表
+    - 神奇宝贝百科：特性列表
+    - 神奇宝贝百科：道具列表
+
+    说明：
+    1. 宝可梦种族数据覆盖第一世代全国图鉴 #0001 到 #0151。
+    2. 技能、道具、训练师、特性、可学技能关系、可用特性关系、训练师宝可梦个体均有初始化数据。
+    3. 本脚本按你当前表结构整理，属性和技能分类使用英文枚举值。
+    4. 脚本使用 not exists 避免重复插入，适合反复调试执行。
+*/
+
+set xact_abort on;
+begin transaction;
+
+/* 1. 技能数据：MOVES */
+insert into MOVES (MOVE_NAME, MOVE_TYPE, MOVE_POWER, MOVE_ACCURACY, MOVE_PP, DAMAGE_CATEGORY)
+select v.MOVE_NAME, v.MOVE_TYPE, v.MOVE_POWER, v.MOVE_ACCURACY, v.MOVE_PP, v.DAMAGE_CATEGORY
+from
+(
+    values
+    (N'撞击', N'normal', 40, 100, 35, N'physical'),
+    (N'叫声', N'normal', 0, 100, 40, N'status'),
+    (N'藤鞭', N'grass', 45, 100, 25, N'physical'),
+    (N'飞叶快刀', N'grass', 55, 95, 25, N'physical'),
+    (N'日光束', N'grass', 120, 100, 10, N'special'),
+    (N'吸取', N'grass', 20, 100, 25, N'special'),
+    (N'火花', N'fire', 40, 100, 25, N'special'),
+    (N'喷射火焰', N'fire', 90, 100, 15, N'special'),
+    (N'劈开', N'normal', 70, 100, 20, N'physical'),
+    (N'水枪', N'water', 40, 100, 25, N'special'),
+    (N'水炮', N'water', 110, 80, 5, N'special'),
+    (N'泡沫光线', N'water', 65, 100, 20, N'special'),
+    (N'冲浪', N'water', 90, 100, 15, N'special'),
+    (N'电击', N'electric', 40, 100, 30, N'special'),
+    (N'十万伏特', N'electric', 90, 100, 15, N'special'),
+    (N'电光一闪', N'normal', 40, 100, 30, N'physical'),
+    (N'影子球', N'ghost', 80, 100, 15, N'special'),
+    (N'催眠术', N'psychic', 0, 60, 20, N'status'),
+    (N'舌舔', N'ghost', 30, 100, 30, N'physical'),
+    (N'龙爪', N'dragon', 80, 100, 15, N'physical'),
+    (N'波导弹', N'fighting', 80, 0, 20, N'special'),
+    (N'金属爪', N'steel', 50, 95, 35, N'physical'),
+    (N'近身战', N'fighting', 120, 100, 5, N'physical'),
+    (N'岩石封锁', N'rock', 60, 95, 15, N'physical'),
+    (N'地震', N'ground', 100, 100, 10, N'physical'),
+    (N'精神强念', N'psychic', 90, 100, 10, N'special'),
+    (N'冰冻光束', N'ice', 90, 100, 10, N'special'),
+    (N'钢翼', N'steel', 70, 90, 25, N'physical'),
+    (N'咬住', N'dark', 60, 100, 25, N'physical'),
+    (N'妖精之风', N'fairy', 40, 100, 30, N'special'),
+    (N'泰山压顶', N'normal', 85, 100, 15, N'physical'),
+    (N'睡觉', N'psychic', 0, 0, 5, N'status'),
+    (N'怪力', N'normal', 80, 100, 15, N'physical'),
+    (N'溶解液', N'poison', 40, 100, 30, N'special'),
+    (N'念力', N'psychic', 50, 100, 25, N'special'),
+    (N'幻象光线', N'psychic', 65, 100, 20, N'special'),
+    (N'拍击', N'normal', 40, 100, 35, N'physical'),
+    (N'空手劈', N'fighting', 50, 100, 25, N'physical'),
+    (N'二连踢', N'fighting', 30, 100, 30, N'physical'),
+    (N'百万吨拳击', N'normal', 80, 85, 20, N'physical'),
+    (N'百万吨重踢', N'normal', 120, 75, 5, N'physical'),
+    (N'火焰拳', N'fire', 75, 100, 15, N'physical'),
+    (N'冰冻拳', N'ice', 75, 100, 15, N'physical'),
+    (N'雷电拳', N'electric', 75, 100, 15, N'physical'),
+    (N'抓', N'normal', 40, 100, 35, N'physical'),
+    (N'夹住', N'normal', 55, 100, 30, N'physical'),
+    (N'剪断', N'normal', 0, 30, 5, N'physical'),
+    (N'翅膀攻击', N'flying', 60, 100, 35, N'physical'),
+    (N'吹飞', N'normal', 0, 0, 20, N'status'),
+    (N'飞翔', N'flying', 90, 95, 15, N'physical'),
+    (N'绑紧', N'normal', 15, 85, 20, N'physical'),
+    (N'摔打', N'normal', 80, 75, 20, N'physical'),
+    (N'飞踢', N'fighting', 100, 95, 10, N'physical'),
+    (N'回旋踢', N'fighting', 60, 85, 15, N'physical'),
+    (N'泼沙', N'ground', 0, 100, 15, N'status'),
+    (N'头锤', N'normal', 70, 100, 15, N'physical'),
+    (N'角撞', N'normal', 65, 100, 25, N'physical'),
+    (N'乱击', N'normal', 15, 85, 20, N'physical'),
+    (N'角钻', N'normal', 0, 30, 5, N'physical'),
+    (N'剑舞', N'normal', 0, 0, 20, N'status'),
+    (N'居合斩', N'normal', 50, 95, 30, N'physical'),
+    (N'起风', N'flying', 40, 100, 35, N'special'),
+    (N'毒针', N'poison', 15, 100, 35, N'physical'),
+    (N'双针', N'bug', 25, 100, 20, N'physical'),
+    (N'飞弹针', N'bug', 25, 95, 20, N'physical'),
+    (N'瞪眼', N'normal', 0, 100, 30, N'status'),
+    (N'咬碎', N'dark', 80, 100, 15, N'physical'),
+    (N'吼叫', N'normal', 0, 0, 20, N'status'),
+    (N'唱歌', N'normal', 0, 55, 15, N'status'),
+    (N'超音波', N'normal', 0, 55, 20, N'status'),
+    (N'音爆', N'normal', 0, 90, 20, N'special'),
+    (N'定身法', N'normal', 0, 100, 20, N'status'),
+    (N'白雾', N'ice', 0, 0, 30, N'status'),
+    (N'暴风雪', N'ice', 110, 70, 5, N'special'),
+    (N'破坏光线', N'normal', 150, 90, 5, N'special'),
+    (N'啄', N'flying', 35, 100, 35, N'physical'),
+    (N'啄钻', N'flying', 80, 100, 20, N'physical'),
+    (N'地狱翻滚', N'fighting', 80, 80, 20, N'physical'),
+    (N'踢倒', N'fighting', 0, 100, 20, N'physical'),
+    (N'双倍奉还', N'fighting', 0, 100, 20, N'physical'),
+    (N'地球上投', N'fighting', 0, 100, 20, N'physical'),
+    (N'生长', N'normal', 0, 0, 20, N'status'),
+    (N'麻痹粉', N'grass', 0, 75, 30, N'status'),
+    (N'睡眠粉', N'grass', 0, 75, 15, N'status'),
+    (N'毒粉', N'poison', 0, 75, 35, N'status'),
+    (N'花瓣舞', N'grass', 120, 100, 10, N'special'),
+    (N'吐丝', N'bug', 0, 95, 40, N'status'),
+    (N'龙之怒', N'dragon', 0, 100, 10, N'special'),
+    (N'火焰旋涡', N'fire', 35, 85, 15, N'special'),
+    (N'打雷', N'electric', 110, 70, 10, N'special'),
+    (N'电磁波', N'electric', 0, 90, 20, N'status'),
+    (N'落石', N'rock', 50, 90, 15, N'physical'),
+    (N'岩崩', N'rock', 75, 90, 10, N'physical'),
+    (N'挖洞', N'ground', 80, 100, 10, N'physical'),
+    (N'剧毒', N'poison', 0, 90, 10, N'status'),
+    (N'混乱光线', N'ghost', 0, 100, 10, N'status'),
+    (N'黑夜魔影', N'ghost', 0, 100, 15, N'special'),
+    (N'自我再生', N'normal', 0, 0, 5, N'status'),
+    (N'变硬', N'normal', 0, 0, 30, N'status'),
+    (N'变小', N'normal', 0, 0, 10, N'status'),
+    (N'烟幕', N'normal', 0, 100, 20, N'status'),
+    (N'缩入壳中', N'water', 0, 0, 40, N'status'),
+    (N'变圆', N'normal', 0, 0, 40, N'status'),
+    (N'屏障', N'psychic', 0, 0, 20, N'status'),
+    (N'光墙', N'psychic', 0, 0, 30, N'status'),
+    (N'黑雾', N'ice', 0, 0, 30, N'status'),
+    (N'反射壁', N'psychic', 0, 0, 20, N'status'),
+    (N'聚气', N'normal', 0, 0, 30, N'status'),
+    (N'忍耐', N'normal', 0, 0, 10, N'status'),
+    (N'挥指', N'normal', 0, 0, 10, N'status'),
+    (N'鹦鹉学舌', N'flying', 0, 0, 20, N'status'),
+    (N'自爆', N'normal', 200, 100, 5, N'physical'),
+    (N'炸蛋', N'normal', 100, 75, 10, N'physical'),
+    (N'污泥攻击', N'poison', 65, 100, 20, N'special'),
+    (N'骨棒', N'ground', 65, 85, 20, N'physical'),
+    (N'大字爆炎', N'fire', 110, 85, 5, N'special'),
+    (N'攀瀑', N'water', 80, 100, 15, N'physical'),
+    (N'贝壳夹击', N'water', 35, 85, 15, N'physical'),
+    (N'高速星星', N'normal', 60, 0, 20, N'special'),
+    (N'火箭头锤', N'normal', 130, 100, 10, N'physical'),
+    (N'尖刺加农炮', N'normal', 20, 100, 15, N'physical'),
+    (N'缠绕', N'normal', 10, 100, 35, N'physical'),
+    (N'瞬间失忆', N'psychic', 0, 0, 20, N'status'),
+    (N'折弯汤匙', N'psychic', 0, 80, 15, N'status'),
+    (N'生蛋', N'normal', 0, 0, 5, N'status'),
+    (N'飞膝踢', N'fighting', 130, 90, 10, N'physical'),
+    (N'大蛇瞪眼', N'normal', 0, 100, 30, N'status'),
+    (N'食梦', N'psychic', 100, 100, 15, N'special'),
+    (N'毒瓦斯', N'poison', 0, 90, 40, N'status'),
+    (N'投球', N'normal', 15, 85, 20, N'physical'),
+    (N'吸血', N'bug', 80, 100, 10, N'physical'),
+    (N'恶魔之吻', N'normal', 0, 75, 10, N'status'),
+    (N'神鸟猛击', N'flying', 140, 90, 5, N'physical'),
+    (N'变身', N'normal', 0, 0, 10, N'status'),
+    (N'泡沫', N'water', 40, 100, 30, N'special'),
+    (N'迷昏拳', N'normal', 70, 100, 10, N'physical'),
+    (N'蘑菇孢子', N'grass', 0, 100, 15, N'status'),
+    (N'闪光', N'normal', 0, 100, 20, N'status'),
+    (N'精神波', N'psychic', 0, 100, 15, N'special'),
+    (N'跃起', N'normal', 0, 0, 40, N'status'),
+    (N'溶化', N'poison', 0, 0, 20, N'status'),
+    (N'蟹钳锤', N'water', 100, 90, 10, N'physical'),
+    (N'大爆炸', N'normal', 250, 100, 5, N'physical'),
+    (N'疯狂乱抓', N'normal', 18, 80, 15, N'physical'),
+    (N'骨头回力镖', N'ground', 50, 90, 10, N'physical'),
+    (N'尖石攻击', N'rock', 100, 80, 5, N'physical'),
+    (N'空气斩', N'flying', 75, 95, 15, N'special'),
+    (N'能量球', N'grass', 90, 100, 10, N'special'),
+    (N'污泥炸弹', N'poison', 90, 100, 10, N'special'),
+    (N'暗影爪', N'ghost', 70, 100, 15, N'physical')
+) as v(MOVE_NAME, MOVE_TYPE, MOVE_POWER, MOVE_ACCURACY, MOVE_PP, DAMAGE_CATEGORY)
+where not exists (select 1 from MOVES m where m.MOVE_NAME = v.MOVE_NAME);
+
+/* 2. 道具数据：ITEMS */
+insert into ITEMS (ITEM_NAME)
+select v.ITEM_NAME
+from
+(
+    values
+    (N'伤药'), (N'好伤药'), (N'厉害伤药'), (N'全复药'), (N'解毒药'),
+    (N'灼伤药'), (N'解冻药'), (N'解眠药'), (N'解麻药'), (N'精灵球'),
+    (N'超级球'), (N'高级球'), (N'雷之石'), (N'火之石'), (N'水之石'),
+    (N'叶之石'), (N'奇异甜食'), (N'木炭'), (N'神秘水滴'), (N'磁铁'),
+    (N'不变之石'), (N'黑带'), (N'硬石头'), (N'纪念球'), (N'潜水球'),
+    (N'巢穴球'), (N'计时球'), (N'豪华球'), (N'治愈球'), (N'先机球'),
+    (N'黑暗球'), (N'速度球'), (N'甜蜜球'), (N'月之石'), (N'太阳之石'),
+    (N'觉醒之石'), (N'光之石'), (N'暗之石'), (N'金属膜'), (N'升级数据'),
+    (N'王者之证'), (N'生命宝珠'), (N'剩饭'), (N'气势披带'), (N'力量头带'),
+    (N'博识眼镜'), (N'讲究头带'), (N'讲究眼镜'), (N'讲究围巾'), (N'进化奇石'),
+    (N'奇迹种子'), (N'柔软沙子'), (N'毒针'), (N'咒术之符'), (N'弯曲的汤匙'),
+    (N'龙之牙'), (N'丝绸围巾'), (N'不融冰'), (N'锐利鸟嘴'), (N'银粉'),
+    (N'电气球'), (N'贝壳之铃'), (N'焦点镜'), (N'广角镜'), (N'清净坠饰')
+) as v(ITEM_NAME)
+where not exists (select 1 from ITEMS i where i.ITEM_NAME = v.ITEM_NAME);
+
+/* 3. 训练师数据：TRAINERS */
+insert into TRAINERS (TRAINER_NAME, TRAINER_SEX)
+select v.TRAINER_NAME, v.TRAINER_SEX
+from
+(
+    values
+    (N'小智', N'男'),
+    (N'小霞', N'女'),
+    (N'小刚', N'男'),
+    (N'莉佳', N'女'),
+    (N'丹帝', N'男'),
+    (N'竹兰', N'女'),
+    (N'小茂', N'男'),
+    (N'赤红', N'男'),
+    (N'青绿', N'男'),
+    (N'渡', N'男'),
+    (N'科拿', N'女'),
+    (N'马志士', N'男'),
+    (N'娜姿', N'女'),
+    (N'阿桔', N'男'),
+    (N'坂木', N'男'),
+    (N'大吾', N'男'),
+    (N'米可利', N'男'),
+    (N'艾莉丝', N'女'),
+    (N'奇巴纳', N'男'),
+    (N'小遥', N'女'),
+    (N'小光', N'女')
+) as v(TRAINER_NAME, TRAINER_SEX)
+where not exists (select 1 from TRAINERS t where t.TRAINER_NAME = v.TRAINER_NAME);
+
+/* 4. 特性数据：ABILITIES */
+insert into ABILITIES (ABILITY_NAME)
+select v.ABILITY_NAME
+from
+(
+    values
+    (N'茂盛'), (N'猛火'), (N'激流'), (N'鳞粉'), (N'蜕皮'), (N'复眼'),
+    (N'虫之预感'), (N'锐利目光'), (N'逃跑'), (N'威吓'), (N'静电'),
+    (N'沙隐'), (N'毒刺'), (N'迷人之躯'), (N'引火'), (N'精神力'),
+    (N'叶绿素'), (N'孢子'), (N'捡拾'), (N'湿气'), (N'干劲'),
+    (N'储水'), (N'同步'), (N'毅力'), (N'恒净之躯'), (N'坚硬脑袋'),
+    (N'迟钝'), (N'磁力'), (N'早起'), (N'厚脂肪'), (N'恶臭'),
+    (N'硬壳盔甲'), (N'诅咒之躯'), (N'不眠'), (N'怪力钳'), (N'隔音'),
+    (N'结实'), (N'无防守'), (N'魔法防守'), (N'适应力'), (N'避雷针'), (N'柔软'),
+    (N'自然回复'), (N'天恩'), (N'大力士'), (N'轻快'), (N'加速'), (N'斗争心'),
+    (N'蹒跚'), (N'电气引擎'), (N'不屈之心'), (N'雪隐'), (N'贪吃鬼'),
+    (N'愤怒穴位'), (N'轻装'), (N'防尘'), (N'魔法镜'), (N'再生力'),
+    (N'恶作剧之心'), (N'破格'), (N'分析'), (N'砂之力'), (N'铁刺'),
+    (N'神奇鳞片'), (N'浮游'), (N'降雨'), (N'日照'), (N'沙穴'), (N'白色烟雾'),
+    (N'瑜伽之力'), (N'液态污泥'), (N'黏着'), (N'活力'), (N'正电'), (N'负电'),
+    (N'悠游自如'), (N'火焰之躯'), (N'压迫感'), (N'蓄电'), (N'过滤'), (N'下载'),
+    (N'复制'), (N'技术高手'), (N'战斗盔甲'), (N'胆怯'), (N'湿润之躯')
+) as v(ABILITY_NAME)
+where not exists (select 1 from ABILITIES a where a.ABILITY_NAME = v.ABILITY_NAME);
+
+/* 5. 第一世代 151 只宝可梦种族数据：POKEMON_SPECIES */
+insert into POKEMON_SPECIES
+(
+    POKEMON_NAME, POKEMON_TYPE1, POKEMON_TYPE2,
+    HP, ATK, DEF, SPA, SPD, SPE
+)
+select
+    v.POKEMON_NAME, v.POKEMON_TYPE1, v.POKEMON_TYPE2,
+    v.HP, v.ATK, v.DEF, v.SPA, v.SPD, v.SPE
+from
+(
+    values
+    (N'妙蛙种子', N'grass', N'poison', 45, 49, 49, 65, 65, 45),
+    (N'妙蛙草', N'grass', N'poison', 60, 62, 63, 80, 80, 60),
+    (N'妙蛙花', N'grass', N'poison', 80, 82, 83, 100, 100, 80),
+    (N'小火龙', N'fire', null, 39, 52, 43, 60, 50, 65),
+    (N'火恐龙', N'fire', null, 58, 64, 58, 80, 65, 80),
+    (N'喷火龙', N'fire', N'flying', 78, 84, 78, 109, 85, 100),
+    (N'杰尼龟', N'water', null, 44, 48, 65, 50, 64, 43),
+    (N'卡咪龟', N'water', null, 59, 63, 80, 65, 80, 58),
+    (N'水箭龟', N'water', null, 79, 83, 100, 85, 105, 78),
+    (N'绿毛虫', N'bug', null, 45, 30, 35, 20, 20, 45),
+    (N'铁甲蛹', N'bug', null, 50, 20, 55, 25, 25, 30),
+    (N'巴大蝶', N'bug', N'flying', 60, 45, 50, 90, 80, 70),
+    (N'独角虫', N'bug', N'poison', 40, 35, 30, 20, 20, 50),
+    (N'铁壳蛹', N'bug', N'poison', 45, 25, 50, 25, 25, 35),
+    (N'大针蜂', N'bug', N'poison', 65, 90, 40, 45, 80, 75),
+    (N'波波', N'normal', N'flying', 40, 45, 40, 35, 35, 56),
+    (N'比比鸟', N'normal', N'flying', 63, 60, 55, 50, 50, 71),
+    (N'大比鸟', N'normal', N'flying', 83, 80, 75, 70, 70, 101),
+    (N'小拉达', N'normal', null, 30, 56, 35, 25, 35, 72),
+    (N'拉达', N'normal', null, 55, 81, 60, 50, 70, 97),
+    (N'烈雀', N'normal', N'flying', 40, 60, 30, 31, 31, 70),
+    (N'大嘴雀', N'normal', N'flying', 65, 90, 65, 61, 61, 100),
+    (N'阿柏蛇', N'poison', null, 35, 60, 44, 40, 54, 55),
+    (N'阿柏怪', N'poison', null, 60, 95, 69, 65, 79, 80),
+    (N'皮卡丘', N'electric', null, 35, 55, 40, 50, 50, 90),
+    (N'雷丘', N'electric', null, 60, 90, 55, 90, 80, 110),
+    (N'穿山鼠', N'ground', null, 50, 75, 85, 20, 30, 40),
+    (N'穿山王', N'ground', null, 75, 100, 110, 45, 55, 65),
+    (N'尼多兰', N'poison', null, 55, 47, 52, 40, 40, 41),
+    (N'尼多娜', N'poison', null, 70, 62, 67, 55, 55, 56),
+    (N'尼多后', N'poison', N'ground', 90, 92, 87, 75, 85, 76),
+    (N'尼多朗', N'poison', null, 46, 57, 40, 40, 40, 50),
+    (N'尼多力诺', N'poison', null, 61, 72, 57, 55, 55, 65),
+    (N'尼多王', N'poison', N'ground', 81, 102, 77, 85, 75, 85),
+    (N'皮皮', N'fairy', null, 70, 45, 48, 60, 65, 35),
+    (N'皮可西', N'fairy', null, 95, 70, 73, 95, 90, 60),
+    (N'六尾', N'fire', null, 38, 41, 40, 50, 65, 65),
+    (N'九尾', N'fire', null, 73, 76, 75, 81, 100, 100),
+    (N'胖丁', N'normal', N'fairy', 115, 45, 20, 45, 25, 20),
+    (N'胖可丁', N'normal', N'fairy', 140, 70, 45, 85, 50, 45),
+    (N'超音蝠', N'poison', N'flying', 40, 45, 35, 30, 40, 55),
+    (N'大嘴蝠', N'poison', N'flying', 75, 80, 70, 65, 75, 90),
+    (N'走路草', N'grass', N'poison', 45, 50, 55, 75, 65, 30),
+    (N'臭臭花', N'grass', N'poison', 60, 65, 70, 85, 75, 40),
+    (N'霸王花', N'grass', N'poison', 75, 80, 85, 110, 90, 50),
+    (N'派拉斯', N'bug', N'grass', 35, 70, 55, 45, 55, 25),
+    (N'派拉斯特', N'bug', N'grass', 60, 95, 80, 60, 80, 30),
+    (N'毛球', N'bug', N'poison', 60, 55, 50, 40, 55, 45),
+    (N'摩鲁蛾', N'bug', N'poison', 70, 65, 60, 90, 75, 90),
+    (N'地鼠', N'ground', null, 10, 55, 25, 35, 45, 95),
+    (N'三地鼠', N'ground', null, 35, 100, 50, 50, 70, 120),
+    (N'喵喵', N'normal', null, 40, 45, 35, 40, 40, 90),
+    (N'猫老大', N'normal', null, 65, 70, 60, 65, 65, 115),
+    (N'可达鸭', N'water', null, 50, 52, 48, 65, 50, 55),
+    (N'哥达鸭', N'water', null, 80, 82, 78, 95, 80, 85),
+    (N'猴怪', N'fighting', null, 40, 80, 35, 35, 45, 70),
+    (N'火暴猴', N'fighting', null, 65, 105, 60, 60, 70, 95),
+    (N'卡蒂狗', N'fire', null, 55, 70, 45, 70, 50, 60),
+    (N'风速狗', N'fire', null, 90, 110, 80, 100, 80, 95),
+    (N'蚊香蝌蚪', N'water', null, 40, 50, 40, 40, 40, 90),
+    (N'蚊香君', N'water', null, 65, 65, 65, 50, 50, 90),
+    (N'蚊香泳士', N'water', N'fighting', 90, 95, 95, 70, 90, 70),
+    (N'凯西', N'psychic', null, 25, 20, 15, 105, 55, 90),
+    (N'勇基拉', N'psychic', null, 40, 35, 30, 120, 70, 105),
+    (N'胡地', N'psychic', null, 55, 50, 45, 135, 95, 120),
+    (N'腕力', N'fighting', null, 70, 80, 50, 35, 35, 35),
+    (N'豪力', N'fighting', null, 80, 100, 70, 50, 60, 45),
+    (N'怪力', N'fighting', null, 90, 130, 80, 65, 85, 55),
+    (N'喇叭芽', N'grass', N'poison', 50, 75, 35, 70, 30, 40),
+    (N'口呆花', N'grass', N'poison', 65, 90, 50, 85, 45, 55),
+    (N'大食花', N'grass', N'poison', 80, 105, 65, 100, 70, 70),
+    (N'玛瑙水母', N'water', N'poison', 40, 40, 35, 50, 100, 70),
+    (N'毒刺水母', N'water', N'poison', 80, 70, 65, 80, 120, 100),
+    (N'小拳石', N'rock', N'ground', 40, 80, 100, 30, 30, 20),
+    (N'隆隆石', N'rock', N'ground', 55, 95, 115, 45, 45, 35),
+    (N'隆隆岩', N'rock', N'ground', 80, 120, 130, 55, 65, 45),
+    (N'小火马', N'fire', null, 50, 85, 55, 65, 65, 90),
+    (N'烈焰马', N'fire', null, 65, 100, 70, 80, 80, 105),
+    (N'呆呆兽', N'water', N'psychic', 90, 65, 65, 40, 40, 15),
+    (N'呆壳兽', N'water', N'psychic', 95, 75, 110, 100, 80, 30),
+    (N'小磁怪', N'electric', N'steel', 25, 35, 70, 95, 55, 45),
+    (N'三合一磁怪', N'electric', N'steel', 50, 60, 95, 120, 70, 70),
+    (N'大葱鸭', N'normal', N'flying', 52, 90, 55, 58, 62, 60),
+    (N'嘟嘟', N'normal', N'flying', 35, 85, 45, 35, 35, 75),
+    (N'嘟嘟利', N'normal', N'flying', 60, 110, 70, 60, 60, 110),
+    (N'小海狮', N'water', null, 65, 45, 55, 45, 70, 45),
+    (N'白海狮', N'water', N'ice', 90, 70, 80, 70, 95, 70),
+    (N'臭泥', N'poison', null, 80, 80, 50, 40, 50, 25),
+    (N'臭臭泥', N'poison', null, 105, 105, 75, 65, 100, 50),
+    (N'大舌贝', N'water', null, 30, 65, 100, 45, 25, 40),
+    (N'刺甲贝', N'water', N'ice', 50, 95, 180, 85, 45, 70),
+    (N'鬼斯', N'ghost', N'poison', 30, 35, 30, 100, 35, 80),
+    (N'鬼斯通', N'ghost', N'poison', 45, 50, 45, 115, 55, 95),
+    (N'耿鬼', N'ghost', N'poison', 60, 65, 60, 130, 75, 110),
+    (N'大岩蛇', N'rock', N'ground', 35, 45, 160, 30, 45, 70),
+    (N'催眠貘', N'psychic', null, 60, 48, 45, 43, 90, 42),
+    (N'引梦貘人', N'psychic', null, 85, 73, 70, 73, 115, 67),
+    (N'大钳蟹', N'water', null, 30, 105, 90, 25, 25, 50),
+    (N'巨钳蟹', N'water', null, 55, 130, 115, 50, 50, 75),
+    (N'霹雳电球', N'electric', null, 40, 30, 50, 55, 55, 100),
+    (N'顽皮雷弹', N'electric', null, 60, 50, 70, 80, 80, 150),
+    (N'蛋蛋', N'grass', N'psychic', 60, 40, 80, 60, 45, 40),
+    (N'椰蛋树', N'grass', N'psychic', 95, 95, 85, 125, 75, 55),
+    (N'卡拉卡拉', N'ground', null, 50, 50, 95, 40, 50, 35),
+    (N'嘎啦嘎啦', N'ground', null, 60, 80, 110, 50, 80, 45),
+    (N'飞腿郎', N'fighting', null, 50, 120, 53, 35, 110, 87),
+    (N'快拳郎', N'fighting', null, 50, 105, 79, 35, 110, 76),
+    (N'大舌头', N'normal', null, 90, 55, 75, 60, 75, 30),
+    (N'瓦斯弹', N'poison', null, 40, 65, 95, 60, 45, 35),
+    (N'双弹瓦斯', N'poison', null, 65, 90, 120, 85, 70, 60),
+    (N'独角犀牛', N'ground', N'rock', 80, 85, 95, 30, 30, 25),
+    (N'钻角犀兽', N'ground', N'rock', 105, 130, 120, 45, 45, 40),
+    (N'吉利蛋', N'normal', null, 250, 5, 5, 35, 105, 50),
+    (N'蔓藤怪', N'grass', null, 65, 55, 115, 100, 40, 60),
+    (N'袋兽', N'normal', null, 105, 95, 80, 40, 80, 90),
+    (N'墨海马', N'water', null, 30, 40, 70, 70, 25, 60),
+    (N'海刺龙', N'water', null, 55, 65, 95, 95, 45, 85),
+    (N'角金鱼', N'water', null, 45, 67, 60, 35, 50, 63),
+    (N'金鱼王', N'water', null, 80, 92, 65, 65, 80, 68),
+    (N'海星星', N'water', null, 30, 45, 55, 70, 55, 85),
+    (N'宝石海星', N'water', N'psychic', 60, 75, 85, 100, 85, 115),
+    (N'魔墙人偶', N'psychic', N'fairy', 40, 45, 65, 100, 120, 90),
+    (N'飞天螳螂', N'bug', N'flying', 70, 110, 80, 55, 80, 105),
+    (N'迷唇姐', N'ice', N'psychic', 65, 50, 35, 115, 95, 95),
+    (N'电击兽', N'electric', null, 65, 83, 57, 95, 85, 105),
+    (N'鸭嘴火兽', N'fire', null, 65, 95, 57, 100, 85, 93),
+    (N'凯罗斯', N'bug', null, 65, 125, 100, 55, 70, 85),
+    (N'肯泰罗', N'normal', null, 75, 100, 95, 40, 70, 110),
+    (N'鲤鱼王', N'water', null, 20, 10, 55, 15, 20, 80),
+    (N'暴鲤龙', N'water', N'flying', 95, 125, 79, 60, 100, 81),
+    (N'拉普拉斯', N'water', N'ice', 130, 85, 80, 85, 95, 60),
+    (N'百变怪', N'normal', null, 48, 48, 48, 48, 48, 48),
+    (N'伊布', N'normal', null, 55, 55, 50, 45, 65, 55),
+    (N'水伊布', N'water', null, 130, 65, 60, 110, 95, 65),
+    (N'雷伊布', N'electric', null, 65, 65, 60, 110, 95, 130),
+    (N'火伊布', N'fire', null, 65, 130, 60, 95, 110, 65),
+    (N'多边兽', N'normal', null, 65, 60, 70, 85, 75, 40),
+    (N'菊石兽', N'rock', N'water', 35, 40, 100, 90, 55, 35),
+    (N'多刺菊石兽', N'rock', N'water', 70, 60, 125, 115, 70, 55),
+    (N'化石盔', N'rock', N'water', 30, 80, 90, 55, 45, 55),
+    (N'镰刀盔', N'rock', N'water', 60, 115, 105, 65, 70, 80),
+    (N'化石翼龙', N'rock', N'flying', 80, 105, 65, 60, 75, 130),
+    (N'卡比兽', N'normal', null, 160, 110, 65, 65, 110, 30),
+    (N'急冻鸟', N'ice', N'flying', 90, 85, 100, 95, 125, 85),
+    (N'闪电鸟', N'electric', N'flying', 90, 90, 85, 125, 90, 100),
+    (N'火焰鸟', N'fire', N'flying', 90, 100, 90, 125, 85, 90),
+    (N'迷你龙', N'dragon', null, 41, 64, 45, 50, 50, 50),
+    (N'哈克龙', N'dragon', null, 61, 84, 65, 70, 70, 70),
+    (N'快龙', N'dragon', N'flying', 91, 134, 95, 100, 100, 80),
+    (N'超梦', N'psychic', null, 106, 110, 90, 154, 90, 130),
+    (N'梦幻', N'psychic', null, 100, 100, 100, 100, 100, 100)
+) as v(POKEMON_NAME, POKEMON_TYPE1, POKEMON_TYPE2, HP, ATK, DEF, SPA, SPD, SPE)
+where not exists (select 1 from POKEMON_SPECIES ps where ps.POKEMON_NAME = v.POKEMON_NAME);
+
+/* 6. 第一世代宝可梦的主要特性关系：POKEMON_ABILITY */
+insert into POKEMON_ABILITY (POKEMON_SPECIES_ID, ABILITY_ID)
+select ps.POKEMON_SPECIES_ID, a.ABILITY_ID
+from
+(
+    values
+    (N'妙蛙种子', N'茂盛'), (N'妙蛙草', N'茂盛'), (N'妙蛙花', N'茂盛'),
+    (N'小火龙', N'猛火'), (N'火恐龙', N'猛火'), (N'喷火龙', N'猛火'),
+    (N'杰尼龟', N'激流'), (N'卡咪龟', N'激流'), (N'水箭龟', N'激流'),
+    (N'绿毛虫', N'鳞粉'), (N'铁甲蛹', N'蜕皮'), (N'巴大蝶', N'复眼'),
+    (N'独角虫', N'鳞粉'), (N'铁壳蛹', N'蜕皮'), (N'大针蜂', N'虫之预感'),
+    (N'波波', N'锐利目光'), (N'比比鸟', N'锐利目光'), (N'大比鸟', N'锐利目光'),
+    (N'小拉达', N'逃跑'), (N'拉达', N'逃跑'),
+    (N'烈雀', N'锐利目光'), (N'大嘴雀', N'锐利目光'),
+    (N'阿柏蛇', N'威吓'), (N'阿柏怪', N'威吓'),
+    (N'皮卡丘', N'静电'), (N'雷丘', N'静电'),
+    (N'穿山鼠', N'沙隐'), (N'穿山王', N'沙隐'),
+    (N'尼多兰', N'毒刺'), (N'尼多娜', N'毒刺'), (N'尼多后', N'毒刺'),
+    (N'尼多朗', N'毒刺'), (N'尼多力诺', N'毒刺'), (N'尼多王', N'毒刺'),
+    (N'皮皮', N'迷人之躯'), (N'皮可西', N'迷人之躯'),
+    (N'六尾', N'引火'), (N'九尾', N'引火'),
+    (N'胖丁', N'迷人之躯'), (N'胖可丁', N'迷人之躯'),
+    (N'超音蝠', N'精神力'), (N'大嘴蝠', N'精神力'),
+    (N'走路草', N'叶绿素'), (N'臭臭花', N'叶绿素'), (N'霸王花', N'叶绿素'),
+    (N'派拉斯', N'孢子'), (N'派拉斯特', N'孢子'),
+    (N'毛球', N'复眼'), (N'摩鲁蛾', N'鳞粉'),
+    (N'地鼠', N'沙隐'), (N'三地鼠', N'沙隐'),
+    (N'喵喵', N'捡拾'), (N'猫老大', N'柔软'),
+    (N'可达鸭', N'湿气'), (N'哥达鸭', N'湿气'),
+    (N'猴怪', N'干劲'), (N'火暴猴', N'干劲'),
+    (N'卡蒂狗', N'威吓'), (N'风速狗', N'威吓'),
+    (N'蚊香蝌蚪', N'储水'), (N'蚊香君', N'储水'), (N'蚊香泳士', N'储水'),
+    (N'凯西', N'同步'), (N'勇基拉', N'同步'), (N'胡地', N'同步'),
+    (N'腕力', N'毅力'), (N'豪力', N'毅力'), (N'怪力', N'毅力'),
+    (N'喇叭芽', N'叶绿素'), (N'口呆花', N'叶绿素'), (N'大食花', N'叶绿素'),
+    (N'玛瑙水母', N'恒净之躯'), (N'毒刺水母', N'恒净之躯'),
+    (N'小拳石', N'坚硬脑袋'), (N'隆隆石', N'坚硬脑袋'), (N'隆隆岩', N'坚硬脑袋'),
+    (N'小火马', N'逃跑'), (N'烈焰马', N'逃跑'),
+    (N'呆呆兽', N'迟钝'), (N'呆壳兽', N'迟钝'),
+    (N'小磁怪', N'磁力'), (N'三合一磁怪', N'磁力'),
+    (N'大葱鸭', N'锐利目光'),
+    (N'嘟嘟', N'逃跑'), (N'嘟嘟利', N'逃跑'),
+    (N'小海狮', N'厚脂肪'), (N'白海狮', N'厚脂肪'),
+    (N'臭泥', N'恶臭'), (N'臭臭泥', N'恶臭'),
+    (N'大舌贝', N'硬壳盔甲'), (N'刺甲贝', N'硬壳盔甲'),
+    (N'鬼斯', N'诅咒之躯'), (N'鬼斯通', N'诅咒之躯'), (N'耿鬼', N'诅咒之躯'),
+    (N'大岩蛇', N'坚硬脑袋'),
+    (N'催眠貘', N'不眠'), (N'引梦貘人', N'不眠'),
+    (N'大钳蟹', N'怪力钳'), (N'巨钳蟹', N'怪力钳'),
+    (N'霹雳电球', N'隔音'), (N'顽皮雷弹', N'隔音'),
+    (N'蛋蛋', N'叶绿素'), (N'椰蛋树', N'叶绿素'),
+    (N'卡拉卡拉', N'坚硬脑袋'), (N'嘎啦嘎啦', N'坚硬脑袋'),
+    (N'飞腿郎', N'柔软'), (N'快拳郎', N'锐利目光'),
+    (N'大舌头', N'迟钝'),
+    (N'瓦斯弹', N'浮游'), (N'双弹瓦斯', N'浮游'),
+    (N'独角犀牛', N'避雷针'), (N'钻角犀兽', N'避雷针'),
+    (N'吉利蛋', N'自然回复'), (N'蔓藤怪', N'叶绿素'), (N'袋兽', N'早起'),
+    (N'墨海马', N'悠游自如'), (N'海刺龙', N'悠游自如'),
+    (N'角金鱼', N'悠游自如'), (N'金鱼王', N'悠游自如'),
+    (N'海星星', N'自然回复'), (N'宝石海星', N'自然回复'),
+    (N'魔墙人偶', N'隔音'), (N'飞天螳螂', N'虫之预感'), (N'迷唇姐', N'迟钝'),
+    (N'电击兽', N'静电'), (N'鸭嘴火兽', N'火焰之躯'),
+    (N'凯罗斯', N'怪力钳'), (N'肯泰罗', N'威吓'),
+    (N'鲤鱼王', N'悠游自如'), (N'暴鲤龙', N'威吓'),
+    (N'拉普拉斯', N'储水'), (N'百变怪', N'柔软'),
+    (N'伊布', N'逃跑'), (N'水伊布', N'储水'), (N'雷伊布', N'蓄电'), (N'火伊布', N'引火'),
+    (N'多边兽', N'复制'),
+    (N'菊石兽', N'悠游自如'), (N'多刺菊石兽', N'悠游自如'),
+    (N'化石盔', N'悠游自如'), (N'镰刀盔', N'悠游自如'),
+    (N'化石翼龙', N'坚硬脑袋'), (N'卡比兽', N'厚脂肪'),
+    (N'急冻鸟', N'压迫感'), (N'闪电鸟', N'压迫感'), (N'火焰鸟', N'压迫感'),
+    (N'迷你龙', N'蜕皮'), (N'哈克龙', N'蜕皮'), (N'快龙', N'精神力'),
+    (N'超梦', N'压迫感'), (N'梦幻', N'同步')
+) as v(POKEMON_NAME, ABILITY_NAME)
+join POKEMON_SPECIES ps on ps.POKEMON_NAME = v.POKEMON_NAME
+join ABILITIES a on a.ABILITY_NAME = v.ABILITY_NAME
+where not exists
+(
+    select 1
+    from POKEMON_ABILITY pa
+    where pa.POKEMON_SPECIES_ID = ps.POKEMON_SPECIES_ID
+      and pa.ABILITY_ID = a.ABILITY_ID
+);
+
+/* 7. 宝可梦可学习技能关系：POKEMON_MOVE
+      这里按属性给每种宝可梦分配一组演示用技能，便于前端筛选和学习技能演示。 */
+insert into POKEMON_MOVE (POKEMON_SPECIES_ID, MOVE_ID)
+select distinct ps.POKEMON_SPECIES_ID, m.MOVE_ID
+from POKEMON_SPECIES ps
+join MOVES m
+    on m.MOVE_NAME in (N'撞击', N'睡觉')
+    or ((ps.POKEMON_TYPE1 = N'grass' or ps.POKEMON_TYPE2 = N'grass') and m.MOVE_NAME in (N'藤鞭', N'吸取', N'飞叶快刀', N'日光束'))
+    or ((ps.POKEMON_TYPE1 = N'fire' or ps.POKEMON_TYPE2 = N'fire') and m.MOVE_NAME in (N'火花', N'喷射火焰'))
+    or ((ps.POKEMON_TYPE1 = N'water' or ps.POKEMON_TYPE2 = N'water') and m.MOVE_NAME in (N'水枪', N'泡沫光线', N'冲浪', N'水炮'))
+    or ((ps.POKEMON_TYPE1 = N'electric' or ps.POKEMON_TYPE2 = N'electric') and m.MOVE_NAME in (N'电击', N'十万伏特', N'电光一闪'))
+    or ((ps.POKEMON_TYPE1 = N'poison' or ps.POKEMON_TYPE2 = N'poison') and m.MOVE_NAME in (N'溶解液'))
+    or ((ps.POKEMON_TYPE1 = N'flying' or ps.POKEMON_TYPE2 = N'flying') and m.MOVE_NAME in (N'钢翼', N'电光一闪'))
+    or ((ps.POKEMON_TYPE1 = N'ground' or ps.POKEMON_TYPE2 = N'ground') and m.MOVE_NAME in (N'地震'))
+    or ((ps.POKEMON_TYPE1 = N'rock' or ps.POKEMON_TYPE2 = N'rock') and m.MOVE_NAME in (N'岩石封锁'))
+    or ((ps.POKEMON_TYPE1 = N'psychic' or ps.POKEMON_TYPE2 = N'psychic') and m.MOVE_NAME in (N'催眠术', N'精神强念'))
+    or ((ps.POKEMON_TYPE1 = N'fighting' or ps.POKEMON_TYPE2 = N'fighting') and m.MOVE_NAME in (N'怪力', N'近身战'))
+    or ((ps.POKEMON_TYPE1 = N'ghost' or ps.POKEMON_TYPE2 = N'ghost') and m.MOVE_NAME in (N'舌舔', N'影子球'))
+    or ((ps.POKEMON_TYPE1 = N'ice' or ps.POKEMON_TYPE2 = N'ice') and m.MOVE_NAME in (N'冰冻光束'))
+    or ((ps.POKEMON_TYPE1 = N'steel' or ps.POKEMON_TYPE2 = N'steel') and m.MOVE_NAME in (N'金属爪', N'钢翼'))
+    or ((ps.POKEMON_TYPE1 = N'fairy' or ps.POKEMON_TYPE2 = N'fairy') and m.MOVE_NAME in (N'妖精之风'))
+where not exists
+(
+    select 1
+    from POKEMON_MOVE pm
+    where pm.POKEMON_SPECIES_ID = ps.POKEMON_SPECIES_ID
+      and pm.MOVE_ID = m.MOVE_ID
+);
+
+/* 7.1 示例个体携带技能补充：确保 POKEMONS 的复合外键可通过 */
+insert into POKEMON_MOVE (POKEMON_SPECIES_ID, MOVE_ID)
+select ps.POKEMON_SPECIES_ID, m.MOVE_ID
+from
+(
+    values
+    (N'皮卡丘', N'电击'), (N'皮卡丘', N'十万伏特'), (N'皮卡丘', N'电光一闪'), (N'皮卡丘', N'睡觉'),
+    (N'喷火龙', N'火花'), (N'喷火龙', N'喷射火焰'), (N'喷火龙', N'钢翼'), (N'喷火龙', N'睡觉'), (N'喷火龙', N'地震'),
+    (N'杰尼龟', N'水枪'), (N'杰尼龟', N'泡沫光线'), (N'杰尼龟', N'冲浪'), (N'杰尼龟', N'撞击'),
+    (N'哥达鸭', N'水枪'), (N'哥达鸭', N'冲浪'), (N'哥达鸭', N'冰冻光束'), (N'哥达鸭', N'精神强念'),
+    (N'水箭龟', N'水枪'), (N'水箭龟', N'水炮'), (N'水箭龟', N'冲浪'), (N'水箭龟', N'冰冻光束'),
+    (N'大岩蛇', N'撞击'), (N'大岩蛇', N'岩石封锁'), (N'大岩蛇', N'地震'), (N'大岩蛇', N'怪力'),
+    (N'怪力', N'怪力'), (N'怪力', N'近身战'), (N'怪力', N'地震'), (N'怪力', N'泰山压顶'), (N'怪力', N'岩石封锁'),
+    (N'妙蛙花', N'藤鞭'), (N'妙蛙花', N'飞叶快刀'), (N'妙蛙花', N'日光束'), (N'妙蛙花', N'睡觉'),
+    (N'霸王花', N'吸取'), (N'霸王花', N'飞叶快刀'), (N'霸王花', N'日光束'), (N'霸王花', N'溶解液'),
+    (N'耿鬼', N'催眠术'), (N'耿鬼', N'舌舔'), (N'耿鬼', N'影子球'), (N'耿鬼', N'精神强念'),
+    (N'胡地', N'催眠术'), (N'胡地', N'精神强念'), (N'胡地', N'影子球'), (N'胡地', N'睡觉')
+) as v(POKEMON_NAME, MOVE_NAME)
+join POKEMON_SPECIES ps on ps.POKEMON_NAME = v.POKEMON_NAME
+join MOVES m on m.MOVE_NAME = v.MOVE_NAME
+where not exists
+(
+    select 1
+    from POKEMON_MOVE pm
+    where pm.POKEMON_SPECIES_ID = ps.POKEMON_SPECIES_ID
+      and pm.MOVE_ID = m.MOVE_ID
+);
+
+/* 8. 训练师拥有的宝可梦个体：POKEMONS */
+insert into POKEMONS
+(
+    POKEMON_SPECIES_ID, POKEMON_NICKNAME, HELD_ITEM_ID,
+    TRAINER_ID, POKEMON_LEVEL, ABILITY_ID,
+    MOVE_1, MOVE_2, MOVE_3, MOVE_4
+)
+select
+    ps.POKEMON_SPECIES_ID,
+    v.POKEMON_NICKNAME,
+    it.ITEM_ID,
+    t.TRAINER_ID,
+    v.POKEMON_LEVEL,
+    ab.ABILITY_ID,
+    m1.MOVE_ID,
+    m2.MOVE_ID,
+    m3.MOVE_ID,
+    m4.MOVE_ID
+from
+(
+    values
+    (N'小智', N'皮卡丘', N'皮神', N'磁铁', 35, N'静电', N'电击', N'十万伏特', N'电光一闪', N'睡觉'),
+    (N'小智', N'喷火龙', N'老喷', N'木炭', 50, N'猛火', N'火花', N'喷射火焰', N'钢翼', N'睡觉'),
+    (N'小智', N'杰尼龟', N'小杰', N'神秘水滴', 28, N'激流', N'水枪', N'泡沫光线', N'冲浪', N'撞击'),
+    (N'小霞', N'哥达鸭', N'阿达', N'神秘水滴', 42, N'湿气', N'水枪', N'冲浪', N'冰冻光束', N'精神强念'),
+    (N'小霞', N'水箭龟', N'水炮手', N'神秘水滴', 55, N'激流', N'水枪', N'水炮', N'冲浪', N'冰冻光束'),
+    (N'小刚', N'大岩蛇', N'小刚岩蛇', N'硬石头', 38, N'坚硬脑袋', N'撞击', N'岩石封锁', N'地震', N'怪力'),
+    (N'小刚', N'怪力', N'四腕', N'黑带', 45, N'毅力', N'怪力', N'近身战', N'地震', N'泰山压顶'),
+    (N'莉佳', N'妙蛙花', N'花园', N'叶之石', 48, N'茂盛', N'藤鞭', N'飞叶快刀', N'日光束', N'睡觉'),
+    (N'莉佳', N'霸王花', N'花王', null, 44, N'叶绿素', N'吸取', N'飞叶快刀', N'日光束', N'溶解液'),
+    (N'丹帝', N'喷火龙', N'冠军喷火龙', N'木炭', 62, N'猛火', N'火花', N'喷射火焰', N'钢翼', N'地震'),
+    (N'丹帝', N'怪力', N'冠军怪力', N'黑带', 58, N'毅力', N'怪力', N'近身战', N'地震', N'岩石封锁'),
+    (N'竹兰', N'耿鬼', N'影子', null, 57, N'诅咒之躯', N'催眠术', N'舌舔', N'影子球', N'精神强念'),
+    (N'竹兰', N'胡地', N'念力王', null, 52, N'同步', N'催眠术', N'精神强念', N'影子球', N'睡觉')
+) as v
+(
+    TRAINER_NAME, POKEMON_NAME, POKEMON_NICKNAME, HELD_ITEM_NAME,
+    POKEMON_LEVEL, ABILITY_NAME,
+    MOVE_1_NAME, MOVE_2_NAME, MOVE_3_NAME, MOVE_4_NAME
+)
+join TRAINERS t on t.TRAINER_NAME = v.TRAINER_NAME
+join POKEMON_SPECIES ps on ps.POKEMON_NAME = v.POKEMON_NAME
+join ABILITIES ab on ab.ABILITY_NAME = v.ABILITY_NAME
+left join ITEMS it on it.ITEM_NAME = v.HELD_ITEM_NAME
+left join MOVES m1 on m1.MOVE_NAME = v.MOVE_1_NAME
+left join MOVES m2 on m2.MOVE_NAME = v.MOVE_2_NAME
+left join MOVES m3 on m3.MOVE_NAME = v.MOVE_3_NAME
+left join MOVES m4 on m4.MOVE_NAME = v.MOVE_4_NAME
+where not exists
+(
+    select 1
+    from POKEMONS p
+    join TRAINERS existing_trainer on existing_trainer.TRAINER_ID = p.TRAINER_ID
+    where existing_trainer.TRAINER_NAME = v.TRAINER_NAME
+      and p.POKEMON_NICKNAME = v.POKEMON_NICKNAME
+);
+
+commit transaction;
+go
